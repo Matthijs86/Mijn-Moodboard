@@ -1,0 +1,181 @@
+
+<!DOCTYPE html>
+<html lang="nl">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    >
+
+    <meta
+        name="theme-color"
+        content="#eaf5fc"
+    >
+
+    <meta
+        name="description"
+        content="Mijn persoonlijke inspiratie en moodboards"
+    >
+
+    <title>Mijn Moodboard</title>
+
+    <link rel="stylesheet" href="style.css">
+
+</head>
+
+<body>
+
+    <div class="app-container">
+
+        <!-- HEADER -->
+
+        <header class="app-header">
+
+            <h1>Mijn Moodboard</h1>
+
+            <p>
+                Mijn huis. Mijn ideeën. Mijn inspiratie.
+            </p>
+
+        </header>
+
+
+        <!-- STARTPAGINA -->
+
+        <main>
+
+            <section id="startpagina">
+
+                <div class="pagina-titel">
+
+                    <h2>Mijn ruimtes</h2>
+
+                    <p>
+                        Kies een ruimte om je ideeën te bekijken.
+                    </p>
+
+                </div>
+
+
+                <!-- CATEGORIEËN -->
+
+                <div
+                    id="categorieContainer"
+                    class="categorie-container"
+                >
+
+                    <!-- Categorieën worden via JavaScript toegevoegd -->
+
+                </div>
+
+
+                <!-- CATEGORIE TOEVOEGEN -->
+
+                <button
+                    type="button"
+                    id="categorieToevoegen"
+                    class="knop-categorie-toevoegen"
+                >
+
+                    <span class="plus-icoon">+</span>
+
+                    Nieuwe categorie toevoegen
+
+                </button>
+
+            </section>
+
+
+            <!-- MOODBOARD PAGINA -->
+
+            <section
+                id="moodboardPagina"
+                class="moodboard-pagina verborgen"
+            >
+
+                <div class="moodboard-header">
+
+                    <button
+                        type="button"
+                        id="terugNaarStart"
+                        class="knop-terug"
+                    >
+
+                        ← Terug
+
+                    </button>
+
+                    <h2 id="moodboardTitel">
+                        Mijn moodboard
+                    </h2>
+
+                </div>
+
+
+                <!-- WERKBALK -->
+
+                <div class="moodboard-werkbalk">
+
+                    <button type="button" id="afbeeldingToevoegen">
+                        + Afbeelding
+                    </button>
+
+                    <button type="button" id="notitieToevoegen">
+                        + Notitie
+                    </button>
+
+                    <button type="button" id="linkToevoegen">
+                        + Weblink
+                    </button>
+
+                </div>
+
+
+                <!-- AFBEELDINGEN UPLOADEN -->
+
+                <input
+                    type="file"
+                    id="afbeeldingUpload"
+                    accept="image/*"
+                    hidden
+                >
+
+
+                <!-- MOODBOARD WERKVLAK -->
+
+                <div
+                    id="moodboardWerkvlak"
+                    class="moodboard-werkvlak"
+                >
+
+                    <p class="lege-moodboard-tekst">
+                        Jouw ideeën beginnen hier. ❤️
+                    </p>
+
+                </div>
+
+            </section>
+
+        </main>
+
+
+        <!-- FOOTER -->
+
+        <footer class="app-footer">
+
+            <p>Made with ❤️ for inspiration</p>
+
+        </footer>
+
+    </div>
+
+
+    <script src="script.js"></script>
+
+</body>
+
+</html>
