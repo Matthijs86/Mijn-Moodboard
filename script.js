@@ -433,6 +433,7 @@ async function moodboardWeergeven() {
     afbeeldingUrlsOpruimen();
 
     moodboardWerkvlak.innerHTML = "";
+    moodboardWerkvlak.style.minHeight = "";
 
     try {
 
@@ -516,6 +517,162 @@ function legeTekstControleren() {
 
 }
 
+/* ======================================
+   ONDERDELEN VRIJ VERPLAATSEN
+   ====================================== */
+
+function verslepenInstellen(kaart, onderdeel) {
+
+    let actief = false;
+    let pointerId = null;
+
+    let offsetX = 0;
+    let offsetY = 0;
+
+    kaart.addEventListener("pointerdown", (event) => {
+
+        // Knoppen en weblinks blijven gewoon aanklikbaar.
+        if (event.target.closest("button, a")) {
+            return;
+        }
+
+        if (event.pointerType === "mouse" && event.button !== 0) {
+            return;
+        }
+
+        event.preventDefault();
+
+        const kaartRect = kaart.getBoundingClientRect();
+
+        offsetX = event.clientX - kaartRect.left;
+        offsetY = event.clientY - kaartRect.top;
+
+        actief = true;
+        pointerId = event.pointerId;
+
+        kaart.setPointerCapture(event.pointerId);
+
+    });
+
+    kaart.addEventListener("pointermove", (event) => {
+
+        if (!actief || event.pointerId !== pointerId) {
+            return;
+        }
+
+        event.preventDefault();
+
+        const werkvlakRect =
+            moodboardWerkvlak.getBoundingClientRect();
+
+        const maximaleLinks =
+            Math.max(
+                0,
+                moodboardWerkvlak.clientWidth - kaart.offsetWidth
+            );
+
+        const links = Math.min(
+            maximaleLinks,
+            Math.max(
+                0,
+                event.clientX - werkvlakRect.left - offsetX
+            )
+        );
+
+        const boven = Math.max(
+            0,
+            event.clientY - werkvlakRect.top - offsetY
+        );
+
+        kaart.style.left = `${links}px`;
+        kaart.style.top = `${boven}px`;
+
+        werkvlakHoogteBijwerken();
+
+    });
+
+    async function verplaatsingOpslaan(event) {
+
+        if (!actief || event.pointerId !== pointerId) {
+            return;
+        }
+
+        actief = false;
+        pointerId = null;
+
+        onderdeel.x = Math.round(
+            parseFloat(kaart.style.left) || 0
+        );
+
+        onderdeel.y = Math.round(
+            parseFloat(kaart.style.top) || 0
+        );
+
+        try {
+
+            await onderdeelOpslaan(onderdeel);
+
+        } catch (fout) {
+
+            console.error(
+                "Nieuwe positie opslaan mislukt:",
+                fout
+            );
+
+            alert(
+                "De nieuwe positie kon niet worden opgeslagen."
+            );
+
+        }
+
+        werkvlakHoogteBijwerken();
+
+    }
+
+    kaart.addEventListener(
+        "pointerup",
+        verplaatsingOpslaan
+    );
+
+    kaart.addEventListener(
+        "pointercancel",
+        verplaatsingOpslaan
+    );
+
+}
+
+
+/* ======================================
+   HOOGTE MOODBOARD WERKVLAK BIJWERKEN
+   ====================================== */
+
+function werkvlakHoogteBijwerken() {
+
+    const kaarten = Array.from(
+        moodboardWerkvlak.querySelectorAll(
+            ".moodboard-onderdeel"
+        )
+    );
+
+    const laagstePunt = kaarten.reduce(
+        (hoogste, kaart) => {
+
+            return Math.max(
+                hoogste,
+                kaart.offsetTop + kaart.offsetHeight
+            );
+
+        },
+        0
+    );
+
+    const minimaleHoogte = window.innerHeight * 0.65;
+
+    moodboardWerkvlak.style.minHeight =
+        `${Math.max(minimaleHoogte, laagstePunt + 20)}px`;
+
+}
+
 
 /* ======================================
    17. NIEUW ONDERDEEL WEERGEVEN
@@ -525,19 +682,54 @@ function onderdeelWeergeven(onderdeel) {
 
     legeTekstControleren();
 
-    const kaart = document.createElement("div");
+   
+const kaart = document.createElement("div");
 
-    kaart.style.position = "relative";
+kaart.className = "moodboard-onderdeel";
 
-    kaart.style.display = "block";
+// Bepalen of dit onderdeel al een opgeslagen positie heeft.
+const heeftPositie =
+    Number.isFinite(onderdeel.x) &&
+    Number.isFinite(onderdeel.y);
 
-    kaart.style.width = "fit-content";
+// Oude onderdelen krijgen automatisch een nieuwe positie.
+if (!heeftPositie) {
 
-    kaart.style.maxWidth = "calc(100% - 20px)";
+    const bestaandeKaarten = Array.from(
+        moodboardWerkvlak.querySelectorAll(
+            ".moodboard-onderdeel"
+        )
+    );
 
-    kaart.style.margin = "10px";
+    const laagstePunt = bestaandeKaarten.reduce(
+        (hoogste, bestaandeKaart) => {
 
-    kaart.style.padding = "10px";
+            return Math.max(
+                hoogste,
+                bestaandeKaart.offsetTop +
+                bestaandeKaart.offsetHeight
+            );
+
+        },
+        0
+    );
+
+    onderdeel.x = 12;
+    onderdeel.y = laagstePunt + 12;
+
+}
+
+kaart.style.left = `${onderdeel.x}px`;
+kaart.style.top = `${onderdeel.y}px`;
+
+kaart.style.display = "block";
+
+kaart.style.width = "fit-content";
+
+kaart.style.maxWidth = "calc(100% - 20px)";
+
+kaart.style.margin = "0";
+
 
     kaart.style.borderRadius = "12px";
 
@@ -697,6 +889,26 @@ function onderdeelWeergeven(onderdeel) {
     kaart.appendChild(verwijderKnop);
 
     moodboardWerkvlak.appendChild(kaart);
+
+// Nieuwe onderdelen krijgen hun positie in IndexedDB.
+if (!heeftPositie) {
+
+    onderdeelOpslaan(onderdeel).catch((fout) => {
+
+        console.error(
+            "Beginpositie opslaan mislukt:",
+            fout
+        );
+
+    });
+
+}
+
+// Verslepen activeren.
+verslepenInstellen(kaart, onderdeel);
+
+// Werkvlak aanpassen aan de inhoud.
+werkvlakHoogteBijwerken();
 
 }
 
