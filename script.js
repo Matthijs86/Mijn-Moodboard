@@ -1,11 +1,13 @@
 
 /* ======================================
-   MIJN MOODBOARD - SCRIPT
+   MIJN MOODBOARD
+   SCRIPT.JS - VERSIE 2
+   Permanente opslag met IndexedDB
    ====================================== */
 
 
 /* ======================================
-   ELEMENTEN OPHALEN
+   1. ELEMENTEN OPHALEN
    ====================================== */
 
 const categorieContainer =
@@ -43,61 +45,243 @@ const linkToevoegen =
 
 
 /* ======================================
-   CATEGORIEËN
+   2. CATEGORIEËN
    ====================================== */
 
 const standaardCategorieen = [
-    {
-        naam: "Tuin",
-        icoon: "🌿"
-    },
-    {
-        naam: "Woonkamer",
-        icoon: "🛋️"
-    },
-    {
-        naam: "Gang",
-        icoon: "🚪"
-    },
-    {
-        naam: "Keuken",
-        icoon: "🍽️"
-    },
-    {
-        naam: "Slaapkamer",
-        icoon: "🛏️"
-    },
-    {
-        naam: "Badkamer",
-        icoon: "🛁"
-    }
+    { naam: "Tuin", icoon: "🌿" },
+    { naam: "Woonkamer", icoon: "🛋️" },
+    { naam: "Gang", icoon: "🚪" },
+    { naam: "Keuken", icoon: "🍽️" },
+    { naam: "Slaapkamer", icoon: "🛏️" },
+    { naam: "Badkamer", icoon: "🛁" }
 ];
 
 let categorieen = [];
 
 let actieveCategorie = null;
 
+let database = null;
+
+let actieveAfbeeldingUrls = [];
+
 
 /* ======================================
-   CATEGORIEËN OPHALEN UIT OPSLAG
+   3. INDEXEDDB INSTELLEN
+   ====================================== */
+
+const DATABASE_NAAM = "MijnMoodboardDatabase";
+
+const DATABASE_VERSIE = 1;
+
+function databaseOpenen() {
+
+    return new Promise((resolve, reject) => {
+
+        const aanvraag = indexedDB.open(
+            DATABASE_NAAM,
+            DATABASE_VERSIE
+        );
+
+        aanvraag.onupgradeneeded = (event) => {
+
+            const db = event.target.result;
+
+            if (!db.objectStoreNames.contains("onderdelen")) {
+
+                const opslag = db.createObjectStore(
+                    "onderdelen",
+                    { keyPath: "id" }
+                );
+
+                opslag.createIndex(
+                    "categorie",
+                    "categorie",
+                    { unique: false }
+                );
+
+            }
+
+        };
+
+        aanvraag.onsuccess = (event) => {
+
+            database = event.target.result;
+
+            database.onversionchange = () => {
+                database.close();
+            };
+
+            resolve(database);
+
+        };
+
+        aanvraag.onerror = () => {
+
+            reject(aanvraag.error);
+
+        };
+
+    });
+
+}
+
+
+/* ======================================
+   4. GEGEVENS OPSLAAN
+   ====================================== */
+
+function onderdeelOpslaan(onderdeel) {
+
+    return new Promise((resolve, reject) => {
+
+        const transactie = database.transaction(
+            "onderdelen",
+            "readwrite"
+        );
+
+        const opslag = transactie.objectStore("onderdelen");
+
+        opslag.put(onderdeel);
+
+        transactie.oncomplete = () => resolve();
+
+        transactie.onerror = () => reject(transactie.error);
+
+        transactie.onabort = () => reject(transactie.error);
+
+    });
+
+}
+
+
+/* ======================================
+   5. GEGEVENS OPHALEN
+   ====================================== */
+
+function onderdelenOphalen(categorie) {
+
+    return new Promise((resolve, reject) => {
+
+        const transactie = database.transaction(
+            "onderdelen",
+            "readonly"
+        );
+
+        const opslag = transactie.objectStore("onderdelen");
+
+        const index = opslag.index("categorie");
+
+        const aanvraag = index.getAll(categorie);
+
+        aanvraag.onsuccess = () => {
+
+            resolve(aanvraag.result);
+
+        };
+
+        aanvraag.onerror = () => {
+
+            reject(aanvraag.error);
+
+        };
+
+    });
+
+}
+
+
+/* ======================================
+   6. GEGEVENS VERWIJDEREN
+   ====================================== */
+
+function onderdeelVerwijderen(id) {
+
+    return new Promise((resolve, reject) => {
+
+        const transactie = database.transaction(
+            "onderdelen",
+            "readwrite"
+        );
+
+        const opslag = transactie.objectStore("onderdelen");
+
+        opslag.delete(id);
+
+        transactie.oncomplete = () => resolve();
+
+        transactie.onerror = () => reject(transactie.error);
+
+        transactie.onabort = () => reject(transactie.error);
+
+    });
+
+}
+
+
+/* ======================================
+   7. UNIEKE ID MAKEN
+   ====================================== */
+
+function nieuwID() {
+
+    if (crypto.randomUUID) {
+        return crypto.randomUUID();
+    }
+
+    return (
+        Date.now().toString(36) +
+        Math.random().toString(36).slice(2)
+    );
+
+}
+
+
+/* ======================================
+   8. CATEGORIEËN OPSLAAN
+   ====================================== */
+
+function categorieenOpslaan() {
+
+    localStorage.setItem(
+        "moodboardCategorieen",
+        JSON.stringify(categorieen)
+    );
+
+}
+
+
+/* ======================================
+   9. CATEGORIEËN LADEN
    ====================================== */
 
 function categorieenLaden() {
 
-    const opgeslagenCategorieen =
-        localStorage.getItem("moodboardCategorieen");
+    const opgeslagen = localStorage.getItem(
+        "moodboardCategorieen"
+    );
 
-    if (opgeslagenCategorieen) {
+    if (opgeslagen) {
 
         try {
 
-            categorieen = JSON.parse(opgeslagenCategorieen);
+            const gegevens = JSON.parse(opgeslagen);
 
-            if (!Array.isArray(categorieen)) {
-                categorieen = [...standaardCategorieen];
-            }
+            categorieen = Array.isArray(gegevens)
+                ? gegevens.filter(
+                    item =>
+                        item &&
+                        typeof item.naam === "string" &&
+                        item.naam.trim()
+                )
+                : [...standaardCategorieen];
 
         } catch (fout) {
+
+            console.error(
+                "Categorieën konden niet worden geladen:",
+                fout
+            );
 
             categorieen = [...standaardCategorieen];
 
@@ -117,21 +301,7 @@ function categorieenLaden() {
 
 
 /* ======================================
-   CATEGORIEËN OPSLAAN
-   ====================================== */
-
-function categorieenOpslaan() {
-
-    localStorage.setItem(
-        "moodboardCategorieen",
-        JSON.stringify(categorieen)
-    );
-
-}
-
-
-/* ======================================
-   CATEGORIEËN WEERGEVEN
+   10. CATEGORIEËN WEERGEVEN
    ====================================== */
 
 function categorieenWeergeven() {
@@ -174,7 +344,7 @@ function categorieenWeergeven() {
 
 
 /* ======================================
-   NIEUWE CATEGORIE TOEVOEGEN
+   11. NIEUWE CATEGORIE TOEVOEGEN
    ====================================== */
 
 categorieToevoegen.addEventListener("click", () => {
@@ -219,10 +389,27 @@ categorieToevoegen.addEventListener("click", () => {
 
 
 /* ======================================
-   MOODBOARD OPENEN
+   12. OUDE AFBEELDING-URLS OPRUIMEN
    ====================================== */
 
-function moodboardOpenen(categorie) {
+function afbeeldingUrlsOpruimen() {
+
+    actieveAfbeeldingUrls.forEach(url => {
+
+        URL.revokeObjectURL(url);
+
+    });
+
+    actieveAfbeeldingUrls = [];
+
+}
+
+
+/* ======================================
+   13. MOODBOARD OPENEN
+   ====================================== */
+
+async function moodboardOpenen(categorie) {
 
     actieveCategorie = categorie.naam;
 
@@ -232,25 +419,75 @@ function moodboardOpenen(categorie) {
 
     moodboardPagina.classList.remove("verborgen");
 
-    moodboardWerkvlak.innerHTML = "";
-
-    const legeTekst = document.createElement("p");
-
-    legeTekst.className = "lege-moodboard-tekst";
-
-    legeTekst.textContent =
-        "Jouw ideeën beginnen hier. ❤️";
-
-    moodboardWerkvlak.appendChild(legeTekst);
+    await moodboardWeergeven();
 
 }
 
 
 /* ======================================
-   TERUG NAAR STARTPAGINA
+   14. MOODBOARD TERUG LADEN
+   ====================================== */
+
+async function moodboardWeergeven() {
+
+    afbeeldingUrlsOpruimen();
+
+    moodboardWerkvlak.innerHTML = "";
+
+    try {
+
+        const onderdelen = await onderdelenOphalen(
+            actieveCategorie
+        );
+
+        if (onderdelen.length === 0) {
+
+            const legeTekst = document.createElement("p");
+
+            legeTekst.className = "lege-moodboard-tekst";
+
+            legeTekst.textContent =
+                "Jouw ideeën beginnen hier. ❤️";
+
+            moodboardWerkvlak.appendChild(legeTekst);
+
+            return;
+
+        }
+
+        onderdelen.sort(
+            (a, b) => a.aangemaakt - b.aangemaakt
+        );
+
+        onderdelen.forEach(onderdeel => {
+
+            onderdeelWeergeven(onderdeel);
+
+        });
+
+    } catch (fout) {
+
+        console.error(
+            "Moodboard kon niet worden geladen:",
+            fout
+        );
+
+        alert(
+            "Het moodboard kon niet worden geladen."
+        );
+
+    }
+
+}
+
+
+/* ======================================
+   15. TERUG NAAR STARTPAGINA
    ====================================== */
 
 terugNaarStart.addEventListener("click", () => {
+
+    afbeeldingUrlsOpruimen();
 
     moodboardPagina.classList.add("verborgen");
 
@@ -262,7 +499,210 @@ terugNaarStart.addEventListener("click", () => {
 
 
 /* ======================================
-   CONTROLEREN OF CATEGORIE GEOPEND IS
+   16. LEGE TEKST VERWIJDEREN
+   ====================================== */
+
+function legeTekstControleren() {
+
+    const legeTekst = moodboardWerkvlak.querySelector(
+        ".lege-moodboard-tekst"
+    );
+
+    if (legeTekst) {
+
+        legeTekst.remove();
+
+    }
+
+}
+
+
+/* ======================================
+   17. NIEUW ONDERDEEL WEERGEVEN
+   ====================================== */
+
+function onderdeelWeergeven(onderdeel) {
+
+    legeTekstControleren();
+
+    const kaart = document.createElement("div");
+
+    kaart.style.position = "relative";
+
+    kaart.style.display = "block";
+
+    kaart.style.width = "fit-content";
+
+    kaart.style.maxWidth = "calc(100% - 20px)";
+
+    kaart.style.margin = "10px";
+
+    kaart.style.padding = "10px";
+
+    kaart.style.borderRadius = "12px";
+
+    kaart.style.boxShadow =
+        "0 3px 10px rgba(0,0,0,0.08)";
+
+    kaart.style.overflowWrap = "anywhere";
+
+    kaart.style.background = "#ffffff";
+
+
+    /* AFBEELDING */
+
+    if (onderdeel.type === "afbeelding") {
+
+        const afbeelding = document.createElement("img");
+
+        const url = URL.createObjectURL(onderdeel.bestand);
+
+        actieveAfbeeldingUrls.push(url);
+
+        afbeelding.src = url;
+
+        afbeelding.alt = "Mijn inspiratieafbeelding";
+
+        afbeelding.style.display = "block";
+
+        afbeelding.style.width = "100%";
+
+        afbeelding.style.maxWidth = "280px";
+
+        afbeelding.style.height = "auto";
+
+        afbeelding.style.borderRadius = "8px";
+
+        kaart.appendChild(afbeelding);
+
+    }
+
+
+    /* NOTITIE */
+
+    if (onderdeel.type === "notitie") {
+
+        kaart.style.background = "#fff2c9";
+
+        kaart.style.minWidth = "150px";
+
+        const tekst = document.createElement("p");
+
+        tekst.textContent = onderdeel.tekst;
+
+        tekst.style.margin = "0";
+
+        tekst.style.whiteSpace = "pre-wrap";
+
+        tekst.style.color = "#51472f";
+
+        kaart.appendChild(tekst);
+
+    }
+
+
+    /* WEBLINK */
+
+    if (onderdeel.type === "link") {
+
+        kaart.style.background = "#e5f2fb";
+
+        const titel = document.createElement("p");
+
+        titel.textContent = onderdeel.titel || "🔗 Interessante website";
+
+        titel.style.fontWeight = "bold";
+
+        titel.style.margin = "0 0 8px";
+
+        const link = document.createElement("a");
+
+        link.href = onderdeel.url;
+
+        link.textContent = onderdeel.url;
+
+        link.target = "_blank";
+
+        link.rel = "noopener noreferrer";
+
+        kaart.appendChild(titel);
+
+        kaart.appendChild(link);
+
+    }
+
+
+    /* VERWIJDERKNOP */
+
+    const verwijderKnop = document.createElement("button");
+
+    verwijderKnop.type = "button";
+
+    verwijderKnop.textContent = "×";
+
+    verwijderKnop.title = "Verwijder dit onderdeel";
+
+    verwijderKnop.setAttribute(
+        "aria-label",
+        "Verwijder dit onderdeel"
+    );
+
+    verwijderKnop.style.position = "absolute";
+
+    verwijderKnop.style.top = "4px";
+
+    verwijderKnop.style.right = "4px";
+
+    verwijderKnop.style.width = "30px";
+
+    verwijderKnop.style.height = "30px";
+
+    verwijderKnop.style.border = "none";
+
+    verwijderKnop.style.borderRadius = "50%";
+
+    verwijderKnop.style.background = "#ffffff";
+
+    verwijderKnop.style.color = "#8062ca";
+
+    verwijderKnop.style.fontSize = "22px";
+
+    verwijderKnop.style.fontWeight = "bold";
+
+    verwijderKnop.style.boxShadow =
+        "0 2px 6px rgba(0,0,0,0.12)";
+
+    verwijderKnop.addEventListener("click", async () => {
+
+        if (!confirm("Wil je dit onderdeel verwijderen?")) {
+            return;
+        }
+
+        try {
+
+            await onderdeelVerwijderen(onderdeel.id);
+
+            await moodboardWeergeven();
+
+        } catch (fout) {
+
+            console.error(fout);
+
+            alert("Verwijderen is niet gelukt.");
+
+        }
+
+    });
+
+    kaart.appendChild(verwijderKnop);
+
+    moodboardWerkvlak.appendChild(kaart);
+
+}
+
+
+/* ======================================
+   18. CONTROLEREN ACTIEVE CATEGORIE
    ====================================== */
 
 function controleerActieveCategorie() {
@@ -281,7 +721,7 @@ function controleerActieveCategorie() {
 
 
 /* ======================================
-   AFBEELDING TOEVOEGEN
+   19. AFBEELDING TOEVOEGEN
    ====================================== */
 
 afbeeldingToevoegen.addEventListener("click", () => {
@@ -295,62 +735,68 @@ afbeeldingToevoegen.addEventListener("click", () => {
 });
 
 
-afbeeldingUpload.addEventListener("change", (event) => {
+afbeeldingUpload.addEventListener("change", async (event) => {
 
     const bestanden = Array.from(event.target.files);
 
-    bestanden.forEach((bestand) => {
+    if (!controleerActieveCategorie()) {
+        afbeeldingUpload.value = "";
+        return;
+    }
+
+    for (const bestand of bestanden) {
 
         if (!bestand.type.startsWith("image/")) {
-            return;
+            continue;
         }
 
-        const reader = new FileReader();
+        try {
 
-        reader.onload = () => {
+            const onderdeel = {
 
-            const afbeelding = document.createElement("img");
+                id: nieuwID(),
 
-            afbeelding.src = reader.result;
+                categorie: actieveCategorie,
 
-            afbeelding.alt = "Mijn inspiratieafbeelding";
+                type: "afbeelding",
 
-            afbeelding.style.width = "180px";
+                naam: bestand.name,
 
-            afbeelding.style.maxWidth = "100%";
+                bestand: bestand,
 
-            afbeelding.style.height = "auto";
+                aangemaakt: Date.now() + Math.random()
 
-            afbeelding.style.borderRadius = "12px";
+            };
 
-            afbeelding.style.margin = "10px";
+            await onderdeelOpslaan(onderdeel);
 
-            moodboardWerkvlak.appendChild(afbeelding);
+        } catch (fout) {
 
-            const legeTekst = moodboardWerkvlak.querySelector(
-                ".lege-moodboard-tekst"
+            console.error(
+                "Afbeelding opslaan mislukt:",
+                fout
             );
 
-            if (legeTekst) {
-                legeTekst.remove();
-            }
+            alert(
+                "Deze afbeelding kon niet worden opgeslagen. Mogelijk is er onvoldoende opslagruimte."
+            );
 
-        };
+        }
 
-        reader.readAsDataURL(bestand);
-
-    });
+    }
 
     afbeeldingUpload.value = "";
+
+    await moodboardWeergeven();
 
 });
 
 
 /* ======================================
-   TEKSTNOTITIE TOEVOEGEN
+   20. TEKSTNOTITIE TOEVOEGEN
    ====================================== */
 
-notitieToevoegen.addEventListener("click", () => {
+notitieToevoegen.addEventListener("click", async () => {
 
     if (!controleerActieveCategorie()) {
         return;
@@ -364,43 +810,42 @@ notitieToevoegen.addEventListener("click", () => {
         return;
     }
 
-    const notitie = document.createElement("div");
+    const onderdeel = {
 
-    notitie.textContent = tekst.trim();
+        id: nieuwID(),
 
-    notitie.style.background = "#fff2c9";
+        categorie: actieveCategorie,
 
-    notitie.style.padding = "16px";
+        type: "notitie",
 
-    notitie.style.margin = "10px";
+        tekst: tekst.trim(),
 
-    notitie.style.borderRadius = "12px";
+        aangemaakt: Date.now()
 
-    notitie.style.whiteSpace = "pre-wrap";
+    };
 
-    notitie.style.overflowWrap = "anywhere";
+    try {
 
-    notitie.style.boxShadow =
-        "0 3px 10px rgba(0,0,0,0.08)";
+        await onderdeelOpslaan(onderdeel);
 
-    moodboardWerkvlak.appendChild(notitie);
+        await moodboardWeergeven();
 
-    const legeTekst = moodboardWerkvlak.querySelector(
-        ".lege-moodboard-tekst"
-    );
+    } catch (fout) {
 
-    if (legeTekst) {
-        legeTekst.remove();
+        console.error(fout);
+
+        alert("De notitie kon niet worden opgeslagen.");
+
     }
 
 });
 
 
 /* ======================================
-   WEBLINK TOEVOEGEN
+   21. WEBLINK TOEVOEGEN
    ====================================== */
 
-linkToevoegen.addEventListener("click", () => {
+linkToevoegen.addEventListener("click", async () => {
 
     if (!controleerActieveCategorie()) {
         return;
@@ -439,55 +884,76 @@ linkToevoegen.addEventListener("click", () => {
 
     }
 
-    const linkKaart = document.createElement("div");
+    const onderdeel = {
 
-    linkKaart.style.background = "#e5f2fb";
+        id: nieuwID(),
 
-    linkKaart.style.padding = "16px";
+        categorie: actieveCategorie,
 
-    linkKaart.style.margin = "10px";
+        type: "link",
 
-    linkKaart.style.borderRadius = "12px";
+        titel: "🔗 Interessante website",
 
-    linkKaart.style.overflowWrap = "anywhere";
+        url: veiligeUrl.href,
 
-    const linkTitel = document.createElement("p");
+        aangemaakt: Date.now()
 
-    linkTitel.textContent = "🔗 Interessante website";
+    };
 
-    linkTitel.style.fontWeight = "bold";
+    try {
 
-    const link = document.createElement("a");
+        await onderdeelOpslaan(onderdeel);
 
-    link.href = veiligeUrl.href;
+        await moodboardWeergeven();
 
-    link.textContent = url.trim();
+    } catch (fout) {
 
-    link.target = "_blank";
+        console.error(fout);
 
-    link.rel = "noopener noreferrer";
+        alert("De weblink kon niet worden opgeslagen.");
 
-    linkKaart.appendChild(linkTitel);
-
-    linkKaart.appendChild(link);
-
-    moodboardWerkvlak.appendChild(linkKaart);
-
-    const legeTekst = moodboardWerkvlak.querySelector(
-        ".lege-moodboard-tekst"
-    );
-
-    if (legeTekst) {
-        legeTekst.remove();
     }
 
 });
 
 
 /* ======================================
-   APP STARTEN
+   22. APP STARTEN
    ====================================== */
 
-categorieenLaden();
+async function appStarten() {
 
-console.log("Mijn Moodboard is gestart.");
+    try {
+
+        if (!("indexedDB" in window)) {
+
+            throw new Error(
+                "IndexedDB wordt niet ondersteund."
+            );
+
+        }
+
+        await databaseOpenen();
+
+        categorieenLaden();
+
+        console.log(
+            "Mijn Moodboard is gestart. IndexedDB is actief."
+        );
+
+    } catch (fout) {
+
+        console.error(
+            "De app kon niet worden gestart:",
+            fout
+        );
+
+        alert(
+            "De opslag van Mijn Moodboard kon niet worden geopend. Controleer je browser."
+        );
+
+    }
+
+}
+
+appStarten();
