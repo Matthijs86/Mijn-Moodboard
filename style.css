@@ -443,3 +443,24 @@ button:focus-visible {
     }
 
 }
+
+/* ======================================
+   VRIJ VERPLAATSBARE MOODBOARD ONDERDELEN
+   ====================================== */
+
+.moodboard-onderdeel {
+    position: absolute;
+
+    margin: 0;
+
+    touch-action: none;
+
+    user-select: none;
+    -webkit-user-select: none;
+
+    cursor: grab;
+}
+
+.moodboard-onderdeel:active {
+    cursor: grabbing;
+}
