@@ -1176,23 +1176,28 @@ annulerenKnop.style.cursor = "pointer";
    
     if (onderdeel.type === "link") {
 
-        kaart.style.background = "#e5f2fb";
+        kaart.style.background = "#f1edfc";
+        kaart.style.border = "2px solid #b9a5eb";
+        kaart.style.borderRadius = "14px";
+        kaart.style.boxShadow = "0 3px 12px rgba(152, 114, 232, 0.18)";
         kaart.style.width = `${onderdeel.breedte || 260}px`;
         kaart.style.maxWidth = "calc(100vw - 40px)";
         kaart.style.boxSizing = "border-box";
         kaart.style.padding = "12px";
 
         // Titel
-        const titel = document.createElement("p");
+const titel = document.createElement("p");
 
-        titel.textContent =
-            onderdeel.titel || "🔗 Interessante website";
+titel.textContent =
+    onderdeel.titel || "🔗 Interessante website";
 
-        titel.style.fontWeight = "bold";
-        titel.style.margin = "0 0 8px";
-        titel.style.color = "#21445b";
+titel.style.fontWeight = "bold";
+titel.style.margin = "0 0 8px";
+titel.style.color = "#493c70";
+titel.style.fontFamily = "'Trebuchet MS', sans-serif";
+titel.style.fontSize = "15px";
 
-        kaart.appendChild(titel);
+kaart.appendChild(titel);
 
         // Weblink
         const link = document.createElement("a");
@@ -1204,6 +1209,8 @@ annulerenKnop.style.cursor = "pointer";
 
         link.style.overflowWrap = "anywhere";
         link.style.color = "#358fbe";
+link.style.fontFamily = "'Trebuchet MS', sans-serif";
+link.style.fontSize = "14px";
 
         kaart.appendChild(link);
 
@@ -1230,19 +1237,32 @@ annulerenKnop.style.cursor = "pointer";
             titelInvoer.type = "text";
             titelInvoer.value = onderdeel.titel || "";
             titelInvoer.placeholder = "Titel van de website";
+            
             titelInvoer.style.width = "100%";
             titelInvoer.style.boxSizing = "border-box";
             titelInvoer.style.marginBottom = "8px";
-            titelInvoer.style.padding = "8px";
+            titelInvoer.style.padding = "12px";
+            titelInvoer.style.background = "#f1edfc";
+            titelInvoer.style.border = "2px solid #b9a5eb";
+            titelInvoer.style.borderRadius = "10px";
+            titelInvoer.style.color = "#493c70";
+            titelInvoer.style.fontFamily = "'Trebuchet MS', sans-serif";
+            titelInvoer.style.fontSize = "14px";
 
             const linkInvoer = document.createElement("input");
 
             linkInvoer.type = "url";
             linkInvoer.value = onderdeel.url;
             linkInvoer.placeholder = "https://...";
-            linkInvoer.style.width = "100%";
-            linkInvoer.style.boxSizing = "border-box";
-            linkInvoer.style.padding = "8px";
+           linkInvoer.style.width = "100%";
+linkInvoer.style.boxSizing = "border-box";
+linkInvoer.style.padding = "12px";
+linkInvoer.style.background = "#f1edfc";
+linkInvoer.style.border = "2px solid #b9a5eb";
+linkInvoer.style.borderRadius = "10px";
+linkInvoer.style.color = "#493c70";
+linkInvoer.style.fontFamily = "'Trebuchet MS', sans-serif";
+linkInvoer.style.fontSize = "14px";
 
             titel.replaceWith(titelInvoer);
             link.replaceWith(linkInvoer);
@@ -1253,13 +1273,35 @@ annulerenKnop.style.cursor = "pointer";
 
             const opslaanKnop = document.createElement("button");
 
-            opslaanKnop.type = "button";
-            opslaanKnop.textContent = "💾 Opslaan";
+opslaanKnop.type = "button";
+opslaanKnop.textContent = "💾 Opslaan";
 
-            const annulerenKnop = document.createElement("button");
+opslaanKnop.style.padding = "10px 16px";
+opslaanKnop.style.background = "#dff3fa";
+opslaanKnop.style.border = "2px solid #69bce5";
+opslaanKnop.style.borderRadius = "11px";
+opslaanKnop.style.color = "#21445b";
+opslaanKnop.style.fontFamily = "'Trebuchet MS', sans-serif";
+opslaanKnop.style.fontSize = "14px";
+opslaanKnop.style.fontWeight = "700";
+opslaanKnop.style.boxShadow = "0 2px 8px rgba(53, 143, 190, 0.18)";
+opslaanKnop.style.cursor = "pointer";
 
-            annulerenKnop.type = "button";
-            annulerenKnop.textContent = "Annuleren";
+const annulerenKnop = document.createElement("button");
+
+annulerenKnop.type = "button";
+annulerenKnop.textContent = "Annuleren";
+
+annulerenKnop.style.padding = "10px 16px";
+annulerenKnop.style.background = "#f1edfc";
+annulerenKnop.style.border = "2px solid #b9a5eb";
+annulerenKnop.style.borderRadius = "11px";
+annulerenKnop.style.color = "#493c70";
+annulerenKnop.style.fontFamily = "'Trebuchet MS', sans-serif";
+annulerenKnop.style.fontSize = "14px";
+annulerenKnop.style.fontWeight = "700";
+annulerenKnop.style.boxShadow = "0 2px 8px rgba(152, 114, 232, 0.18)";
+annulerenKnop.style.cursor = "pointer";
 
             opslaanKnop.addEventListener("click", async () => {
 
