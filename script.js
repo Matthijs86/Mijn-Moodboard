@@ -899,14 +899,13 @@ kaart.style.margin = "0";
 
     }
 
-
-
     /* NOTITIE */
 
     
     if (onderdeel.type === "notitie") {
 
         kaart.style.background = "#e5f4fc";
+        kaart.style.zIndex = "10";
         kaart.style.border = "2px solid #8bc9e9";
         kaart.style.borderRadius = "14px";
         kaart.style.boxShadow = "0 3px 12px rgba(53, 143, 190, 0.18)";
