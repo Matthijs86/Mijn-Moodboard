@@ -888,11 +888,14 @@ kaart.style.margin = "0";
     /* NOTITIE */
 
    
+    
     if (onderdeel.type === "notitie") {
 
         kaart.style.background = "#fff2c9";
         kaart.style.minWidth = "150px";
-        kaart.style.maxWidth = "300px";
+        kaart.style.width = `${onderdeel.breedte || 220}px`;
+        kaart.style.maxWidth = "600px";
+        kaart.style.boxSizing = "border-box";
         kaart.style.padding = "12px";
 
         const tekst = document.createElement("p");
@@ -912,7 +915,7 @@ kaart.style.margin = "0";
         knoppen.style.gap = "8px";
         knoppen.style.marginTop = "8px";
 
-        // Bewerken-knop
+        // Potloodknop
         const bewerkenKnop = document.createElement("button");
 
         bewerkenKnop.type = "button";
@@ -938,6 +941,9 @@ kaart.style.margin = "0";
             invoer.style.resize = "vertical";
 
             tekst.replaceWith(invoer);
+
+            // Formaatknop tijdelijk verbergen
+            formaatKnop.style.display = "none";
 
             knoppen.innerHTML = "";
 
@@ -995,7 +1001,119 @@ kaart.style.margin = "0";
 
         kaart.appendChild(knoppen);
 
+        // Formaat aanpassen
+        const formaatKnop = document.createElement("button");
+
+        formaatKnop.type = "button";
+        formaatKnop.textContent = "↘";
+        formaatKnop.title = "Notitie groter of kleiner maken";
+
+        formaatKnop.style.position = "absolute";
+        formaatKnop.style.right = "4px";
+        formaatKnop.style.bottom = "4px";
+        formaatKnop.style.width = "30px";
+        formaatKnop.style.height = "30px";
+        formaatKnop.style.display = "flex";
+        formaatKnop.style.alignItems = "center";
+        formaatKnop.style.justifyContent = "center";
+        formaatKnop.style.background = "#ffffff";
+        formaatKnop.style.color = "#8062ca";
+        formaatKnop.style.border = "none";
+        formaatKnop.style.borderRadius = "50%";
+        formaatKnop.style.fontSize = "20px";
+        formaatKnop.style.fontWeight = "bold";
+        formaatKnop.style.cursor = "nwse-resize";
+        formaatKnop.style.touchAction = "none";
+        formaatKnop.style.userSelect = "none";
+        formaatKnop.style.zIndex = "5";
+
+        kaart.appendChild(formaatKnop);
+
+        let formaatActief = false;
+        let beginX = 0;
+        let beginBreedte = 0;
+        let pointerId = null;
+
+        formaatKnop.addEventListener("pointerdown", (event) => {
+
+            event.preventDefault();
+            event.stopPropagation();
+
+            formaatActief = true;
+            pointerId = event.pointerId;
+
+            beginX = event.clientX;
+            beginBreedte = kaart.offsetWidth;
+
+            formaatKnop.setPointerCapture(event.pointerId);
+
+        });
+
+        formaatKnop.addEventListener("pointermove", (event) => {
+
+            if (!formaatActief || event.pointerId !== pointerId) {
+                return;
+            }
+
+            event.preventDefault();
+
+            const verschil = event.clientX - beginX;
+
+            const nieuweBreedte = Math.min(
+                600,
+                Math.max(150, beginBreedte + verschil)
+            );
+
+            kaart.style.width = `${nieuweBreedte}px`;
+
+        });
+
+        async function notitieFormaatOpslaan(event) {
+
+            if (!formaatActief || event.pointerId !== pointerId) {
+                return;
+            }
+
+            formaatActief = false;
+            pointerId = null;
+
+            onderdeel.breedte = Math.round(
+                kaart.getBoundingClientRect().width
+            );
+
+            try {
+
+                await onderdeelOpslaan(onderdeel);
+
+            } catch (fout) {
+
+                console.error(
+                    "Notitieformaat opslaan mislukt:",
+                    fout
+                );
+
+                alert(
+                    "Het nieuwe formaat kon niet worden opgeslagen."
+                );
+
+            }
+
+            werkvlakHoogteBijwerken();
+
+        }
+
+        formaatKnop.addEventListener(
+            "pointerup",
+            notitieFormaatOpslaan
+        );
+
+        formaatKnop.addEventListener(
+            "pointercancel",
+            notitieFormaatOpslaan
+        );
+
     }
+
 
 
 
