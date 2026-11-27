@@ -1,7 +1,7 @@
 
 /* ======================================
    MIJN MOODBOARD
-   SCRIPT.JS - VERSIE 2
+   SCRIPT.JS - VERSIE 3
    Permanente opslag met IndexedDB
    ====================================== */
 
@@ -743,6 +743,7 @@ kaart.style.margin = "0";
 
     /* AFBEELDING */
 
+    
     if (onderdeel.type === "afbeelding") {
 
         const afbeelding = document.createElement("img");
@@ -757,17 +758,131 @@ kaart.style.margin = "0";
 
         afbeelding.style.display = "block";
 
-        afbeelding.style.width = "100%";
+        afbeelding.style.width =
+            `${onderdeel.breedte || 280}px`;
 
-        afbeelding.style.maxWidth = "280px";
+        afbeelding.style.maxWidth = "none";
 
         afbeelding.style.height = "auto";
 
         afbeelding.style.borderRadius = "8px";
 
+        afbeelding.style.pointerEvents = "none";
+
         kaart.appendChild(afbeelding);
 
+        // Vergroot- en verkleinknop
+        const formaatKnop = document.createElement("div");
+
+        formaatKnop.textContent = "↘";
+
+        formaatKnop.title = "Afbeelding groter of kleiner maken";
+
+        formaatKnop.style.position = "absolute";
+        formaatKnop.style.right = "4px";
+        formaatKnop.style.bottom = "4px";
+        formaatKnop.style.width = "30px";
+        formaatKnop.style.height = "30px";
+        formaatKnop.style.display = "flex";
+        formaatKnop.style.alignItems = "center";
+        formaatKnop.style.justifyContent = "center";
+        formaatKnop.style.background = "#ffffff";
+        formaatKnop.style.color = "#8062ca";
+        formaatKnop.style.borderRadius = "50%";
+        formaatKnop.style.fontSize = "20px";
+        formaatKnop.style.fontWeight = "bold";
+        formaatKnop.style.cursor = "nwse-resize";
+        formaatKnop.style.touchAction = "none";
+        formaatKnop.style.userSelect = "none";
+        formaatKnop.style.zIndex = "5";
+
+        kaart.appendChild(formaatKnop);
+
+        let formaatActief = false;
+        let beginX = 0;
+        let beginBreedte = 0;
+        let pointerId = null;
+
+        formaatKnop.addEventListener("pointerdown", (event) => {
+
+            event.preventDefault();
+            event.stopPropagation();
+
+            formaatActief = true;
+            pointerId = event.pointerId;
+
+            beginX = event.clientX;
+            beginBreedte = afbeelding.offsetWidth;
+
+            formaatKnop.setPointerCapture(event.pointerId);
+
+        });
+
+        formaatKnop.addEventListener("pointermove", (event) => {
+
+            if (!formaatActief || event.pointerId !== pointerId) {
+                return;
+            }
+
+            event.preventDefault();
+
+            const verschil = event.clientX - beginX;
+
+            const nieuweBreedte = Math.min(
+                800,
+                Math.max(80, beginBreedte + verschil)
+            );
+
+            afbeelding.style.width = `${nieuweBreedte}px`;
+
+        });
+
+        async function formaatOpslaan(event) {
+
+            if (!formaatActief || event.pointerId !== pointerId) {
+                return;
+            }
+
+            formaatActief = false;
+            pointerId = null;
+
+            onderdeel.breedte = Math.round(
+                afbeelding.offsetWidth
+            );
+
+            try {
+
+                await onderdeelOpslaan(onderdeel);
+
+            } catch (fout) {
+
+                console.error(
+                    "Afbeeldingsformaat opslaan mislukt:",
+                    fout
+                );
+
+                alert(
+                    "Het nieuwe formaat kon niet worden opgeslagen."
+                );
+
+            }
+
+            werkvlakHoogteBijwerken();
+
+        }
+
+        formaatKnop.addEventListener(
+            "pointerup",
+            formaatOpslaan
+        );
+
+        formaatKnop.addEventListener(
+            "pointercancel",
+            formaatOpslaan
+        );
+
     }
+
 
 
     /* NOTITIE */
