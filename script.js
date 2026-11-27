@@ -1,7 +1,7 @@
 
 /* ======================================
    MIJN MOODBOARD
-   SCRIPT.JS - VERSIE 3
+   SCRIPT.JS - VERSIE 2
    Permanente opslag met IndexedDB
    ====================================== */
 
@@ -903,7 +903,6 @@ kaart.style.margin = "0";
 
     /* NOTITIE */
 
-   
     
     if (onderdeel.type === "notitie") {
 
@@ -1130,12 +1129,12 @@ kaart.style.margin = "0";
 
     }
 
-
+    
 
 
     /* WEBLINK */
 
-    
+   
     if (onderdeel.type === "link") {
 
         kaart.style.background = "#e5f2fb";
@@ -1411,7 +1410,6 @@ kaart.style.margin = "0";
     }
 
 
-
     /* VERWIJDERKNOP */
 
     const verwijderKnop = document.createElement("button");
@@ -1535,61 +1533,542 @@ afbeeldingToevoegen.addEventListener("click", () => {
 });
 
 
-afbeeldingUpload.addEventListener("change", async (event) => {
 
-    const bestanden = Array.from(event.target.files);
+/* ======================================
+   AFBEELDING KLAARZETTEN VOOR BIJSNIJDEN
+   ====================================== */
+
+let afbeeldingVoorBijsnijden = null;
+let bestandVoorBijsnijden = null;
+let bijsnijdenSelectie = null;
+
+
+afbeeldingUpload.addEventListener("change", (event) => {
+
+    const bestand = event.target.files[0];
+
+    if (!bestand) {
+        return;
+    }
 
     if (!controleerActieveCategorie()) {
         afbeeldingUpload.value = "";
         return;
     }
 
-    for (const bestand of bestanden) {
+    if (!bestand.type.startsWith("image/")) {
+        afbeeldingUpload.value = "";
+        return;
+    }
 
-        if (!bestand.type.startsWith("image/")) {
-            continue;
-        }
+    afbeeldingVoorBijsnijden = new Image();
 
-        try {
+    bestandVoorBijsnijden = bestand;
 
-            const onderdeel = {
+    afbeeldingVoorBijsnijden.onload = () => {
 
-                id: nieuwID(),
+        bijsnijdenCanvas.width =
+            afbeeldingVoorBijsnijden.naturalWidth;
 
-                categorie: actieveCategorie,
+        bijsnijdenCanvas.height =
+            afbeeldingVoorBijsnijden.naturalHeight;
 
-                type: "afbeelding",
+        bijsnijdenSelectie = {
 
-                naam: bestand.name,
+            x: afbeeldingVoorBijsnijden.naturalWidth * 0.1,
 
-                bestand: bestand,
+            y: afbeeldingVoorBijsnijden.naturalHeight * 0.1,
 
-                aangemaakt: Date.now() + Math.random()
+            breedte: afbeeldingVoorBijsnijden.naturalWidth * 0.8,
 
-            };
+            hoogte: afbeeldingVoorBijsnijden.naturalHeight * 0.8
 
-            await onderdeelOpslaan(onderdeel);
+        };
 
-        } catch (fout) {
+        afbeeldingBijsnijden.classList.remove("verborgen");
 
-            console.error(
-                "Afbeelding opslaan mislukt:",
-                fout
-            );
+        bijsnijdenTekenen();
 
-            alert(
-                "Deze afbeelding kon niet worden opgeslagen. Mogelijk is er onvoldoende opslagruimte."
-            );
+        afbeeldingUpload.value = "";
 
-        }
+    };
+
+    afbeeldingVoorBijsnijden.onerror = () => {
+
+        alert("Deze afbeelding kan niet worden geopend.");
+
+        afbeeldingUpload.value = "";
+
+    };
+
+    afbeeldingVoorBijsnijden.src =
+        URL.createObjectURL(bestand);
+
+});
+
+/* ======================================
+   AFBEELDING BIJSNIJDEN - TEKENEN
+   ====================================== */
+
+function bijsnijdenTekenen() {
+
+    if (!afbeeldingVoorBijsnijden || !bijsnijdenSelectie) {
+        return;
+    }
+
+    const context = bijsnijdenCanvas.getContext("2d");
+
+    const breedte = bijsnijdenCanvas.width;
+    const hoogte = bijsnijdenCanvas.height;
+
+    const selectie = bijsnijdenSelectie;
+
+    // Originele afbeelding tekenen
+
+    context.clearRect(0, 0, breedte, hoogte);
+
+    context.drawImage(
+        afbeeldingVoorBijsnijden,
+        0,
+        0,
+        breedte,
+        hoogte
+    );
+
+    // Donker maken buiten het selectiekader
+
+    context.fillStyle = "rgba(0, 0, 0, 0.55)";
+
+    context.fillRect(0, 0, breedte, hoogte);
+
+    // Geselecteerde gedeelte weer helder tekenen
+
+    context.clearRect(
+        selectie.x,
+        selectie.y,
+        selectie.breedte,
+        selectie.hoogte
+    );
+
+    context.drawImage(
+        afbeeldingVoorBijsnijden,
+        selectie.x,
+        selectie.y,
+        selectie.breedte,
+        selectie.hoogte,
+        selectie.x,
+        selectie.y,
+        selectie.breedte,
+        selectie.hoogte
+    );
+
+    // Rand van het selectiekader
+
+    context.strokeStyle = "#ffffff";
+    context.lineWidth = Math.max(2, breedte / 400);
+
+    context.strokeRect(
+        selectie.x,
+        selectie.y,
+        selectie.breedte,
+        selectie.hoogte
+    );
+
+    // Vier hoekpunten tekenen
+
+    const hoeken = [
+
+        [selectie.x, selectie.y],
+
+        [selectie.x + selectie.breedte, selectie.y],
+
+        [selectie.x, selectie.y + selectie.hoogte],
+
+        [selectie.x + selectie.breedte, selectie.y + selectie.hoogte]
+
+    ];
+
+    context.fillStyle = "#ffffff";
+
+    for (const hoek of hoeken) {
+
+        context.beginPath();
+
+        context.arc(
+            hoek[0],
+            hoek[1],
+            Math.max(8, breedte / 100),
+            0,
+            Math.PI * 2
+        );
+
+        context.fill();
 
     }
 
-    afbeeldingUpload.value = "";
+}
 
-    await moodboardWeergeven();
+
+/* ======================================
+   AFBEELDING BIJSNIJDEN - BEDIENING
+   ====================================== */
+
+let bijsnijdenBeweging = null;
+let bijsnijdenStart = null;
+
+
+bijsnijdenCanvas.addEventListener("pointerdown", (event) => {
+
+    if (!bijsnijdenSelectie) {
+        return;
+    }
+
+    event.preventDefault();
+
+    const rechthoek = bijsnijdenCanvas.getBoundingClientRect();
+
+    const schaalX = bijsnijdenCanvas.width / rechthoek.width;
+    const schaalY = bijsnijdenCanvas.height / rechthoek.height;
+
+    const x = (event.clientX - rechthoek.left) * schaalX;
+    const y = (event.clientY - rechthoek.top) * schaalY;
+
+    const selectie = bijsnijdenSelectie;
+
+    const marge = Math.max(20, bijsnijdenCanvas.width / 50);
+
+    const hoeken = [
+
+        { naam: "linksboven", x: selectie.x, y: selectie.y },
+
+        { naam: "rechtsboven", x: selectie.x + selectie.breedte, y: selectie.y },
+
+        { naam: "linksonder", x: selectie.x, y: selectie.y + selectie.hoogte },
+
+        {
+            naam: "rechtsonder",
+            x: selectie.x + selectie.breedte,
+            y: selectie.y + selectie.hoogte
+        }
+
+    ];
+
+    const hoek = hoeken.find((punt) => {
+
+        return Math.hypot(
+            x - punt.x,
+            y - punt.y
+        ) < marge;
+
+    });
+
+    if (hoek) {
+
+        bijsnijdenBeweging = hoek.naam;
+
+    } else if (
+
+        x >= selectie.x &&
+        x <= selectie.x + selectie.breedte &&
+        y >= selectie.y &&
+        y <= selectie.y + selectie.hoogte
+
+    ) {
+
+        bijsnijdenBeweging = "verplaatsen";
+
+    } else {
+
+        return;
+
+    }
+
+    bijsnijdenStart = {
+
+        x: x,
+        y: y,
+
+        selectieX: selectie.x,
+        selectieY: selectie.y,
+
+        selectieBreedte: selectie.breedte,
+        selectieHoogte: selectie.hoogte
+
+    };
+
+    bijsnijdenCanvas.setPointerCapture(event.pointerId);
 
 });
+
+
+bijsnijdenCanvas.addEventListener("pointermove", (event) => {
+
+    if (!bijsnijdenBeweging || !bijsnijdenStart) {
+        return;
+    }
+
+    event.preventDefault();
+
+    const rechthoek = bijsnijdenCanvas.getBoundingClientRect();
+
+    const schaalX = bijsnijdenCanvas.width / rechthoek.width;
+    const schaalY = bijsnijdenCanvas.height / rechthoek.height;
+
+    const x = (event.clientX - rechthoek.left) * schaalX;
+    const y = (event.clientY - rechthoek.top) * schaalY;
+
+    const verschilX = x - bijsnijdenStart.x;
+    const verschilY = y - bijsnijdenStart.y;
+
+    const selectie = bijsnijdenSelectie;
+
+    const minimum = 30;
+
+    if (bijsnijdenBeweging === "verplaatsen") {
+
+        selectie.x = Math.max(
+            0,
+            Math.min(
+                bijsnijdenCanvas.width - selectie.breedte,
+                bijsnijdenStart.selectieX + verschilX
+            )
+        );
+
+        selectie.y = Math.max(
+            0,
+            Math.min(
+                bijsnijdenCanvas.height - selectie.hoogte,
+                bijsnijdenStart.selectieY + verschilY
+            )
+        );
+
+    }
+
+    if (bijsnijdenBeweging === "linksboven") {
+
+        const nieuweX = Math.max(
+            0,
+            Math.min(
+                bijsnijdenStart.selectieX + bijsnijdenStart.selectieBreedte - minimum,
+                bijsnijdenStart.selectieX + verschilX
+            )
+        );
+
+        const nieuweY = Math.max(
+            0,
+            Math.min(
+                bijsnijdenStart.selectieY + bijsnijdenStart.selectieHoogte - minimum,
+                bijsnijdenStart.selectieY + verschilY
+            )
+        );
+
+        selectie.breedte =
+            bijsnijdenStart.selectieBreedte +
+            bijsnijdenStart.selectieX - nieuweX;
+
+        selectie.hoogte =
+            bijsnijdenStart.selectieHoogte +
+            bijsnijdenStart.selectieY - nieuweY;
+
+        selectie.x = nieuweX;
+        selectie.y = nieuweY;
+
+    }
+
+    if (bijsnijdenBeweging === "rechtsboven") {
+
+        selectie.breedte = Math.max(
+            minimum,
+            Math.min(
+                bijsnijdenCanvas.width - selectie.x,
+                bijsnijdenStart.selectieBreedte + verschilX
+            )
+        );
+
+        const nieuweY = Math.max(
+            0,
+            Math.min(
+                bijsnijdenStart.selectieY + bijsnijdenStart.selectieHoogte - minimum,
+                bijsnijdenStart.selectieY + verschilY
+            )
+        );
+
+        selectie.hoogte =
+            bijsnijdenStart.selectieHoogte +
+            bijsnijdenStart.selectieY - nieuweY;
+
+        selectie.y = nieuweY;
+
+    }
+
+    if (bijsnijdenBeweging === "linksonder") {
+
+        const nieuweX = Math.max(
+            0,
+            Math.min(
+                bijsnijdenStart.selectieX + bijsnijdenStart.selectieBreedte - minimum,
+                bijsnijdenStart.selectieX + verschilX
+            )
+        );
+
+        selectie.breedte =
+            bijsnijdenStart.selectieBreedte +
+            bijsnijdenStart.selectieX - nieuweX;
+
+        selectie.x = nieuweX;
+
+        selectie.hoogte = Math.max(
+            minimum,
+            Math.min(
+                bijsnijdenCanvas.height - selectie.y,
+                bijsnijdenStart.selectieHoogte + verschilY
+            )
+        );
+
+    }
+
+    if (bijsnijdenBeweging === "rechtsonder") {
+
+        selectie.breedte = Math.max(
+            minimum,
+            Math.min(
+                bijsnijdenCanvas.width - selectie.x,
+                bijsnijdenStart.selectieBreedte + verschilX
+            )
+        );
+
+        selectie.hoogte = Math.max(
+            minimum,
+            Math.min(
+                bijsnijdenCanvas.height - selectie.y,
+                bijsnijdenStart.selectieHoogte + verschilY
+            )
+        );
+
+    }
+
+    bijsnijdenTekenen();
+
+});
+
+
+function bijsnijdenStoppen(event) {
+
+    bijsnijdenBeweging = null;
+    bijsnijdenStart = null;
+
+}
+
+
+bijsnijdenCanvas.addEventListener("pointerup", bijsnijdenStoppen);
+
+bijsnijdenCanvas.addEventListener("pointercancel", bijsnijdenStoppen);
+
+
+/* ======================================
+   AFBEELDING BIJSNIJDEN - OPSLAAN
+   ====================================== */
+
+// Bijsnijden annuleren
+
+bijsnijdenAnnuleren.addEventListener("click", () => {
+
+    afbeeldingBijsnijden.classList.add("verborgen");
+
+    afbeeldingVoorBijsnijden = null;
+    bestandVoorBijsnijden = null;
+    bijsnijdenSelectie = null;
+
+});
+
+
+// Bijsnijden bevestigen en opslaan
+
+bijsnijdenBevestigen.addEventListener("click", async () => {
+
+    if (
+        !afbeeldingVoorBijsnijden ||
+        !bestandVoorBijsnijden ||
+        !bijsnijdenSelectie
+    ) {
+        return;
+    }
+
+    const selectie = bijsnijdenSelectie;
+
+    const resultaatCanvas = document.createElement("canvas");
+
+    resultaatCanvas.width = Math.round(selectie.breedte);
+    resultaatCanvas.height = Math.round(selectie.hoogte);
+
+    const context = resultaatCanvas.getContext("2d");
+
+    context.drawImage(
+        afbeeldingVoorBijsnijden,
+        selectie.x,
+        selectie.y,
+        selectie.breedte,
+        selectie.hoogte,
+        0,
+        0,
+        resultaatCanvas.width,
+        resultaatCanvas.height
+    );
+
+    try {
+
+        const afbeeldingBlob = await new Promise((resolve, reject) => {
+
+            resultaatCanvas.toBlob((blob) => {
+
+                if (blob) {
+                    resolve(blob);
+                } else {
+                    reject(new Error("Afbeelding bijsnijden mislukt."));
+                }
+
+            }, "image/png");
+
+        });
+
+        const onderdeel = {
+
+            id: nieuwID(),
+
+            categorie: actieveCategorie,
+
+            type: "afbeelding",
+
+            naam: bestandVoorBijsnijden.name,
+
+            bestand: afbeeldingBlob,
+
+            aangemaakt: Date.now() + Math.random()
+
+        };
+
+        await onderdeelOpslaan(onderdeel);
+
+        afbeeldingBijsnijden.classList.add("verborgen");
+
+        afbeeldingVoorBijsnijden = null;
+        bestandVoorBijsnijden = null;
+        bijsnijdenSelectie = null;
+
+        await moodboardWeergeven();
+
+    } catch (fout) {
+
+        console.error("Afbeelding opslaan mislukt:", fout);
+
+        alert(
+            "De bijgesneden afbeelding kon niet worden opgeslagen."
+        );
+
+    }
+
+});
+
 
 
 /* ======================================
