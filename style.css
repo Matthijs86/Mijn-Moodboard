@@ -464,3 +464,89 @@ button:focus-visible {
 .moodboard-onderdeel:active {
     cursor: grabbing;
 }
+
+
+/* ======================================
+   AFBEELDING BIJSNIJDEN
+   ====================================== */
+
+#afbeeldingBijsnijden {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 16px;
+    box-sizing: border-box;
+
+    background: rgba(20, 30, 40, 0.80);
+}
+
+#afbeeldingBijsnijden.verborgen {
+    display: none;
+}
+
+.bijsnijden-paneel {
+    width: 100%;
+    max-width: 750px;
+    max-height: 90vh;
+
+    overflow-y: auto;
+
+    padding: 20px;
+    box-sizing: border-box;
+
+    background: #ffffff;
+    border-radius: 16px;
+}
+
+.bijsnijden-paneel h2 {
+    margin-top: 0;
+}
+
+#bijsnijdenWerkvlak {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 100%;
+    max-height: 65vh;
+
+    overflow: hidden;
+
+    background: #e9eef2;
+    border-radius: 10px;
+}
+
+#bijsnijdenCanvas {
+    display: block;
+
+    max-width: 100%;
+    max-height: 65vh;
+
+    width: auto;
+    height: auto;
+
+    touch-action: none;
+}
+
+.bijsnijden-knoppen {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+
+    margin-top: 20px;
+}
+
+.bijsnijden-knoppen button {
+    padding: 12px 18px;
+    border: none;
+    border-radius: 10px;
+
+    cursor: pointer;
+}
+
