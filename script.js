@@ -43,6 +43,22 @@ const notitieToevoegen =
 const linkToevoegen =
     document.getElementById("linkToevoegen");
 
+const afbeeldingBijsnijden =
+    document.getElementById("afbeeldingBijsnijden");
+
+const bijsnijdenCanvas =
+    document.getElementById("bijsnijdenCanvas");
+
+const bijsnijdenWerkvlak =
+    document.getElementById("bijsnijdenWerkvlak");
+
+const bijsnijdenAnnuleren =
+    document.getElementById("bijsnijdenAnnuleren");
+
+const bijsnijdenBevestigen =
+    document.getElementById("bijsnijdenBevestigen");
+
+
 
 /* ======================================
    2. CATEGORIEËN
