@@ -1,10 +1,10 @@
 
 /* ======================================
    MIJN MOODBOARD
-   SERVICE WORKER - VERSIE 1
+   SERVICE WORKER - VERSIE 13
    ====================================== */
 
-const CACHE_NAME = "moodboard-v12";
+const CACHE_NAME = "moodboard-v13";
 
 /* BESTANDEN DIE OFFLINE BESCHIKBAAR MOETEN ZIJN */
 
