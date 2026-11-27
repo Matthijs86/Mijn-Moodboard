@@ -916,7 +916,8 @@ kaart.style.margin = "0";
         const bewerkenKnop = document.createElement("button");
 
         bewerkenKnop.type = "button";
-        bewerkenKnop.textContent = "✏️ Bewerken";
+        bewerkenKnop.textContent = "✏️";
+        bewerkenKnop.title = "Notitie bewerken";
 
         bewerkenKnop.addEventListener("click", (event) => {
 
