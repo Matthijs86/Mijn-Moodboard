@@ -4,7 +4,7 @@
    SERVICE WORKER - VERSIE 1
    ====================================== */
 
-const CACHE_NAME = "moodboard-v10";
+const CACHE_NAME = "moodboard-v11";
 
 /* BESTANDEN DIE OFFLINE BESCHIKBAAR MOETEN ZIJN */
 
