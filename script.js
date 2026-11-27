@@ -906,7 +906,10 @@ kaart.style.margin = "0";
     
     if (onderdeel.type === "notitie") {
 
-        kaart.style.background = "#fff2c9";
+        kaart.style.background = "#e5f4fc";
+        kaart.style.border = "2px solid #8bc9e9";
+        kaart.style.borderRadius = "14px";
+        kaart.style.boxShadow = "0 3px 12px rgba(53, 143, 190, 0.18)";
         kaart.style.minWidth = "150px";
         kaart.style.width = `${onderdeel.breedte || 220}px`;
         kaart.style.maxWidth = "600px";
@@ -919,7 +922,10 @@ kaart.style.margin = "0";
 
         tekst.style.margin = "0 0 10px";
         tekst.style.whiteSpace = "pre-wrap";
-        tekst.style.color = "#51472f";
+        tekst.style.color = "#21445b";
+        tekst.style.fontFamily = "'Trebuchet MS', sans-serif";
+        tekst.style.fontSize = "15px";
+        lineHeight = "1.5";
 
         kaart.appendChild(tekst);
 
@@ -945,15 +951,23 @@ kaart.style.margin = "0";
 
             invoer.value = onderdeel.tekst;
 
-            invoer.style.width = "100%";
-            invoer.style.minHeight = "100px";
-            invoer.style.boxSizing = "border-box";
-            invoer.style.padding = "8px";
-            invoer.style.borderRadius = "8px";
-            invoer.style.border = "1px solid #d5bd78";
-            invoer.style.fontFamily = "inherit";
-            invoer.style.fontSize = "15px";
-            invoer.style.resize = "vertical";
+
+        invoer.style.width = "100%";
+        invoer.style.minHeight = "110px";
+        invoer.style.boxSizing = "border-box";
+        invoer.style.padding = "12px";
+
+        invoer.style.background = "#f1edfc";
+        invoer.style.border = "2px solid #b9a5eb";
+        invoer.style.borderRadius = "12px";
+
+        invoer.style.color = "#493c70";
+        invoer.style.fontFamily = "'Trebuchet MS', sans-serif";
+        invoer.style.fontSize = "15px";
+        invoer.style.lineHeight = "1.5";
+
+        invoer.style.resize = "vertical";
+
 
             tekst.replaceWith(invoer);
 
@@ -962,15 +976,40 @@ kaart.style.margin = "0";
 
             knoppen.innerHTML = "";
 
-            const opslaanKnop = document.createElement("button");
+            
+const opslaanKnop = document.createElement("button");
 
-            opslaanKnop.type = "button";
-            opslaanKnop.textContent = "💾 Opslaan";
+opslaanKnop.type = "button";
+opslaanKnop.textContent = "💾 Opslaan";
 
-            const annulerenKnop = document.createElement("button");
+opslaanKnop.style.padding = "10px 16px";
+opslaanKnop.style.background = "#dff3fa";
+opslaanKnop.style.border = "2px solid #69bce5";
+opslaanKnop.style.borderRadius = "11px";
+opslaanKnop.style.color = "#21445b";
+opslaanKnop.style.fontFamily = "'Trebuchet MS', sans-serif";
+opslaanKnop.style.fontSize = "14px";
+opslaanKnop.style.fontWeight = "700";
+opslaanKnop.style.boxShadow = "0 2px 8px rgba(53, 143, 190, 0.18)";
+opslaanKnop.style.cursor = "pointer";
 
-            annulerenKnop.type = "button";
-            annulerenKnop.textContent = "Annuleren";
+
+const annulerenKnop = document.createElement("button");
+
+annulerenKnop.type = "button";
+annulerenKnop.textContent = "Annuleren";
+
+annulerenKnop.style.padding = "10px 16px";
+annulerenKnop.style.background = "#f1edfc";
+annulerenKnop.style.border = "2px solid #b9a5eb";
+annulerenKnop.style.borderRadius = "11px";
+annulerenKnop.style.color = "#493c70";
+annulerenKnop.style.fontFamily = "'Trebuchet MS', sans-serif";
+annulerenKnop.style.fontSize = "14px";
+annulerenKnop.style.fontWeight = "700";
+annulerenKnop.style.boxShadow = "0 2px 8px rgba(152, 114, 232, 0.18)";
+annulerenKnop.style.cursor = "pointer";
+
 
             opslaanKnop.addEventListener("click", async () => {
 
