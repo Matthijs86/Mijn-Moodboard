@@ -887,25 +887,115 @@ kaart.style.margin = "0";
 
     /* NOTITIE */
 
+   
     if (onderdeel.type === "notitie") {
 
         kaart.style.background = "#fff2c9";
-
         kaart.style.minWidth = "150px";
+        kaart.style.maxWidth = "300px";
+        kaart.style.padding = "12px";
 
         const tekst = document.createElement("p");
 
         tekst.textContent = onderdeel.tekst;
 
-        tekst.style.margin = "0";
-
+        tekst.style.margin = "0 0 10px";
         tekst.style.whiteSpace = "pre-wrap";
-
         tekst.style.color = "#51472f";
 
         kaart.appendChild(tekst);
 
+        // Knoppencontainer
+        const knoppen = document.createElement("div");
+
+        knoppen.style.display = "flex";
+        knoppen.style.gap = "8px";
+        knoppen.style.marginTop = "8px";
+
+        // Bewerken-knop
+        const bewerkenKnop = document.createElement("button");
+
+        bewerkenKnop.type = "button";
+        bewerkenKnop.textContent = "✏️ Bewerken";
+
+        bewerkenKnop.addEventListener("click", (event) => {
+
+            event.stopPropagation();
+
+            const invoer = document.createElement("textarea");
+
+            invoer.value = onderdeel.tekst;
+
+            invoer.style.width = "100%";
+            invoer.style.minHeight = "100px";
+            invoer.style.boxSizing = "border-box";
+            invoer.style.padding = "8px";
+            invoer.style.borderRadius = "8px";
+            invoer.style.border = "1px solid #d5bd78";
+            invoer.style.fontFamily = "inherit";
+            invoer.style.fontSize = "15px";
+            invoer.style.resize = "vertical";
+
+            tekst.replaceWith(invoer);
+
+            knoppen.innerHTML = "";
+
+            const opslaanKnop = document.createElement("button");
+
+            opslaanKnop.type = "button";
+            opslaanKnop.textContent = "💾 Opslaan";
+
+            const annulerenKnop = document.createElement("button");
+
+            annulerenKnop.type = "button";
+            annulerenKnop.textContent = "Annuleren";
+
+            opslaanKnop.addEventListener("click", async () => {
+
+                const nieuweTekst = invoer.value.trim();
+
+                if (!nieuweTekst) {
+                    alert("Een notitie mag niet leeg zijn.");
+                    return;
+                }
+
+                onderdeel.tekst = nieuweTekst;
+
+                try {
+
+                    await onderdeelOpslaan(onderdeel);
+
+                    await moodboardWeergeven();
+
+                } catch (fout) {
+
+                    console.error(fout);
+
+                    alert("De notitie kon niet worden opgeslagen.");
+
+                }
+
+            });
+
+            annulerenKnop.addEventListener("click", () => {
+
+                moodboardWeergeven();
+
+            });
+
+            knoppen.appendChild(opslaanKnop);
+            knoppen.appendChild(annulerenKnop);
+
+            invoer.focus();
+
+        });
+
+        knoppen.appendChild(bewerkenKnop);
+
+        kaart.appendChild(knoppen);
+
     }
+
 
 
     /* WEBLINK */
