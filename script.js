@@ -1119,33 +1119,281 @@ kaart.style.margin = "0";
 
     /* WEBLINK */
 
+    
     if (onderdeel.type === "link") {
 
         kaart.style.background = "#e5f2fb";
+        kaart.style.width = `${onderdeel.breedte || 260}px`;
+        kaart.style.maxWidth = "calc(100vw - 40px)";
+        kaart.style.boxSizing = "border-box";
+        kaart.style.padding = "12px";
 
+        // Titel
         const titel = document.createElement("p");
 
-        titel.textContent = onderdeel.titel || "🔗 Interessante website";
+        titel.textContent =
+            onderdeel.titel || "🔗 Interessante website";
 
         titel.style.fontWeight = "bold";
-
         titel.style.margin = "0 0 8px";
-
-        const link = document.createElement("a");
-
-        link.href = onderdeel.url;
-
-        link.textContent = onderdeel.url;
-
-        link.target = "_blank";
-
-        link.rel = "noopener noreferrer";
+        titel.style.color = "#21445b";
 
         kaart.appendChild(titel);
 
+        // Weblink
+        const link = document.createElement("a");
+
+        link.href = onderdeel.url;
+        link.textContent = onderdeel.url;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+
+        link.style.overflowWrap = "anywhere";
+        link.style.color = "#358fbe";
+
         kaart.appendChild(link);
 
+        // Knoppencontainer
+        const knoppen = document.createElement("div");
+
+        knoppen.style.display = "flex";
+        knoppen.style.gap = "8px";
+        knoppen.style.marginTop = "12px";
+
+        // Potloodknop
+        const bewerkenKnop = document.createElement("button");
+
+        bewerkenKnop.type = "button";
+        bewerkenKnop.textContent = "✏️";
+        bewerkenKnop.title = "Weblink bewerken";
+
+        bewerkenKnop.addEventListener("click", (event) => {
+
+            event.stopPropagation();
+
+            const titelInvoer = document.createElement("input");
+
+            titelInvoer.type = "text";
+            titelInvoer.value = onderdeel.titel || "";
+            titelInvoer.placeholder = "Titel van de website";
+            titelInvoer.style.width = "100%";
+            titelInvoer.style.boxSizing = "border-box";
+            titelInvoer.style.marginBottom = "8px";
+            titelInvoer.style.padding = "8px";
+
+            const linkInvoer = document.createElement("input");
+
+            linkInvoer.type = "url";
+            linkInvoer.value = onderdeel.url;
+            linkInvoer.placeholder = "https://...";
+            linkInvoer.style.width = "100%";
+            linkInvoer.style.boxSizing = "border-box";
+            linkInvoer.style.padding = "8px";
+
+            titel.replaceWith(titelInvoer);
+            link.replaceWith(linkInvoer);
+
+            formaatKnop.style.display = "none";
+
+            knoppen.innerHTML = "";
+
+            const opslaanKnop = document.createElement("button");
+
+            opslaanKnop.type = "button";
+            opslaanKnop.textContent = "💾 Opslaan";
+
+            const annulerenKnop = document.createElement("button");
+
+            annulerenKnop.type = "button";
+            annulerenKnop.textContent = "Annuleren";
+
+            opslaanKnop.addEventListener("click", async () => {
+
+                const nieuweTitel = titelInvoer.value.trim();
+                const nieuweUrl = linkInvoer.value.trim();
+
+                let veiligeUrl;
+
+                try {
+
+                    veiligeUrl = new URL(nieuweUrl);
+
+                } catch (fout) {
+
+                    alert("Vul een geldige weblink in.");
+
+                    return;
+
+                }
+
+                if (
+                    veiligeUrl.protocol !== "https:" &&
+                    veiligeUrl.protocol !== "http:"
+                ) {
+
+                    alert("Gebruik een gewone website-link.");
+
+                    return;
+
+                }
+
+                if (!nieuweTitel) {
+
+                    alert("Vul een titel in.");
+
+                    return;
+
+                }
+
+                onderdeel.titel = nieuweTitel;
+                onderdeel.url = veiligeUrl.href;
+
+                try {
+
+                    await onderdeelOpslaan(onderdeel);
+
+                    await moodboardWeergeven();
+
+                } catch (fout) {
+
+                    console.error(fout);
+
+                    alert("De weblink kon niet worden opgeslagen.");
+
+                }
+
+            });
+
+            annulerenKnop.addEventListener("click", () => {
+
+                moodboardWeergeven();
+
+            });
+
+            knoppen.appendChild(opslaanKnop);
+            knoppen.appendChild(annulerenKnop);
+
+            titelInvoer.focus();
+
+        });
+
+        knoppen.appendChild(bewerkenKnop);
+
+        kaart.appendChild(knoppen);
+
+        // Formaat aanpassen
+        const formaatKnop = document.createElement("button");
+
+        formaatKnop.type = "button";
+        formaatKnop.textContent = "↘";
+        formaatKnop.title = "Weblink groter of kleiner maken";
+
+        formaatKnop.style.position = "absolute";
+        formaatKnop.style.right = "4px";
+        formaatKnop.style.bottom = "4px";
+        formaatKnop.style.width = "30px";
+        formaatKnop.style.height = "30px";
+        formaatKnop.style.display = "flex";
+        formaatKnop.style.alignItems = "center";
+        formaatKnop.style.justifyContent = "center";
+        formaatKnop.style.background = "#ffffff";
+        formaatKnop.style.color = "#8062ca";
+        formaatKnop.style.border = "none";
+        formaatKnop.style.borderRadius = "50%";
+        formaatKnop.style.fontSize = "20px";
+        formaatKnop.style.fontWeight = "bold";
+        formaatKnop.style.cursor = "nwse-resize";
+        formaatKnop.style.touchAction = "none";
+        formaatKnop.style.userSelect = "none";
+        formaatKnop.style.zIndex = "5";
+
+        kaart.appendChild(formaatKnop);
+
+        let formaatActief = false;
+        let beginX = 0;
+        let beginBreedte = 0;
+        let pointerId = null;
+
+        formaatKnop.addEventListener("pointerdown", (event) => {
+
+            event.preventDefault();
+            event.stopPropagation();
+
+            formaatActief = true;
+            pointerId = event.pointerId;
+
+            beginX = event.clientX;
+            beginBreedte = kaart.offsetWidth;
+
+            formaatKnop.setPointerCapture(event.pointerId);
+
+        });
+
+        formaatKnop.addEventListener("pointermove", (event) => {
+
+            if (!formaatActief || event.pointerId !== pointerId) {
+                return;
+            }
+
+            event.preventDefault();
+
+            const verschil = event.clientX - beginX;
+
+            const nieuweBreedte = Math.min(
+                600,
+                Math.max(150, beginBreedte + verschil)
+            );
+
+            kaart.style.width = `${nieuweBreedte}px`;
+
+        });
+
+        async function linkFormaatOpslaan(event) {
+
+            if (!formaatActief || event.pointerId !== pointerId) {
+                return;
+            }
+
+            formaatActief = false;
+            pointerId = null;
+
+            onderdeel.breedte = Math.round(
+                kaart.getBoundingClientRect().width
+            );
+
+            try {
+
+                await onderdeelOpslaan(onderdeel);
+
+            } catch (fout) {
+
+                console.error(
+                    "Weblinkformaat opslaan mislukt:",
+                    fout
+                );
+
+                alert(
+                    "Het nieuwe formaat kon niet worden opgeslagen."
+                );
+
+            }
+
+            werkvlakHoogteBijwerken();
+
+        }
+
+        formaatKnop.addEventListener(
+            "pointerup",
+            linkFormaatOpslaan
+        );
+
+        formaatKnop.addEventListener(
+            "pointercancel",
+            linkFormaatOpslaan
+        );
+
     }
+
 
 
     /* VERWIJDERKNOP */
